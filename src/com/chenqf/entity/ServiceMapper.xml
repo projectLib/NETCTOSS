@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"      
+ "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.chenqf.dao.ServiceMapper">
+
+	
+	<select id="findById" resultType="com.chenqf.entity.Service" parameterType="integer">
+		select * from 
+		Service_chenqf s 
+		join account_chenqf a on a.account_id=s.account_id
+		join cost_chenqf c  on c.cost_id=s.cost_id
+		where Service_id=#{Service_id}
+	</select>
+	
+	<insert id="addService" keyProperty="service_id" parameterType="com.chenqf.entity.Service">
+		insert into Service_chenqf 
+				(service_id,
+				account_id,
+				unix_host,
+				os_username,
+				login_passwd,
+				status,
+				create_date,
+				pause_date,
+				close_date,
+				cost_id
+				)
+     	values(
+				service_chenqf_seq.nextval,
+				#{account_id,jdbcType=VARCHAR},
+				#{unix_host,jdbcType=VARCHAR},
+				#{os_username,jdbcType=VARCHAR},
+				#{login_passwd,jdbcType=VARCHAR},
+				#{status,jdbcType=CHAR},
+				#{create_date,jdbcType=TIMESTAMP},
+				#{pause_date,jdbcType=TIMESTAMP},
+				#{close_date,jdbcType=TIMESTAMP},
+				#{cost_id,jdbcType=VARCHAR}
+		)
+	</insert>
+	<!-- 变更业务资费类型，把资费信息插入到service_update_bak标中，月底更新到数据库service表中 -->
+	<insert id="updateService"  parameterType="com.chenqf.entity.Service">
+		insert into service_chenqf_update_bak
+		(id,service_id,cost_id) 
+		values(
+		service_chenqf_bak_seq.nextval,
+		#{service_id,jdbcType=NUMERIC}, 
+		#{cost_id,jdbcType=NUMERIC}
+		)
+	</insert>
+	<update id="updateByStatusToStart" parameterType="int">
+		update service_chenqf 
+		set status=0,pause_date=null
+		where service_id=#{service_id}
+	</update>
+	<update id="updateByStatusToPause" parameterType="int">
+		update service_chenqf 
+		set status=1,pause_date=sysdate
+		where service_id=#{service_id}
+	</update>
+	<!-- 按照Id修该Service的状态为删除 -->
+	<update id="deleteService" parameterType="java.lang.Integer">
+		update Service_chenqf set status='2',close_date=sysdate where service_id=#{service_id}
+	</update>
+	
+	<!-- 分页查询 -->
+	<select id="findByPage" parameterType="com.chenqf.entity.page.ServicePage" resultType="hashmap">
+		select * from(select rownum r,c.* from (select * from 
+		Service_chenqf s 
+		join account_chenqf a on a.account_id=s.account_id
+		join cost_chenqf c  on c.cost_id=s.cost_id
+		<where>
+			<if test='osUserName!=null &amp;&amp; !osUserName.equals("")'>
+				and s.os_username=#{osUserName}
+			</if>
+			<if test='unixHost!=null &amp;&amp; !unixHost.equals("")'>
+				and s.unix_host=#{unixHost}
+			</if>
+			<if test='idcardNo!=null &amp;&amp; !idcardNo.equals("")'>
+				and a.idcard_no=#{idcard_no}
+			</if>
+			<if test='status!=null &amp;&amp; status!=-1 &amp;&amp;  !status.equals("")'>
+				and s.status=#{status}
+			</if>
+		</where>
+		 order by Service_id) c) where r&lt;#{end} and r&gt;#{begin}
+	</select>
+	
+	
+	<!-- 获得数据库中记录的总行数 -->
+	<select id="findRows" resultType="integer" parameterType="com.chenqf.entity.page.ServicePage">
+		select count(*) from 
+		Service_chenqf s 
+		join account_chenqf a on a.account_id=s.account_id
+		join cost_chenqf c  on c.cost_id=s.cost_id
+		<where>
+			<if test='osUserName!=null &amp;&amp; !osUserName.equals("")'>
+				and s.os_username=#{osUserName}
+			</if>
+			<if test='unixHost!=null &amp;&amp; !unixHost.equals("")'>
+				and s.unix_host=#{unixHost}
+			</if>
+			<if test='idcardNo!=null &amp;&amp; !idcardNo.equals("")'>
+				and a.idcard_no=#{idcard_no}
+			</if>
+			<if test='status!=null &amp;&amp; status!=-1 &amp;&amp; !status.equals("")'>
+				and s.status=#{status}
+			</if>
+		</where>
+	</select>
+	
+	<!-- 根据account_id修改状态为暂停 -->
+	<update id="updateByAccountid"  parameterType="int">
+		update service_chenqf set status=1 where account_id=#{account_id}
+	</update>
+	<!-- 根据account_id删除业务 -->
+	<update id="deleteByAccountid"  parameterType="int">
+		update service_chenqf set status=2 where account_id=#{account_id}
+	</update>
+</mapper>

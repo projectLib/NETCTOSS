@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"      
+ "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.chenqf.dao.CostMapper">
+
+	<!-- 查询全部资费 -->
+	<select id="findAll" resultType="com.chenqf.entity.Cost">
+		select * from cost_chenqf order by cost_id
+	</select>
+	
+	<select id="findById" resultType="com.chenqf.entity.Cost" parameterType="integer">
+		select * from cost_chenqf where cost_id=#{cost_id}
+	</select>
+	
+	<!-- 保存一条资费 -->
+	<!-- 
+		插入时，如果传入的属性为null，则MyBatis底层
+		在实现接口时，无法识别null的类型，会导致类型
+		错误。为了避免这种问题的发生，可以在参数上
+		通过jdbcType来设置该字段的数据类型，明确告诉
+		MyBatis按照什么类型来处理。
+		注：一般一个表的字段有很多，其中可以为空的列必
+			须写上jdbcType，不能为空的可以不写，但是
+			我们懒得去区别，一般都写上，就没问题了。
+	 -->
+	<insert id="addCost" keyProperty="cost_id" parameterType="com.chenqf.entity.Cost">
+		insert into cost_chenqf (cost_id,name,base_duration,base_cost,unit_cost,status,descr,creatime,startime,cost_type) 
+		values(cost_chenqf_seq.nextval,
+				#{name,jdbcType=VARCHAR},
+				#{base_duration,jdbcType=DOUBLE},
+				#{base_cost,jdbcType=DOUBLE},
+				#{unit_cost,jdbcType=DOUBLE},
+				#{status,jdbcType=CHAR},
+				#{descr,jdbcType=VARCHAR},
+				#{creatime,jdbcType=TIMESTAMP},
+				#{startime,jdbcType=TIMESTAMP},
+				#{cost_type,jdbcType=CHAR})
+	</insert>
+	<update id="updateCost" parameterType="com.chenqf.entity.Cost">
+		update cost_chenqf set
+		name=#{name,jdbcType=VARCHAR},
+		base_duration=#{base_duration,jdbcType=DOUBLE},
+		base_cost=#{base_cost,jdbcType=DOUBLE},
+		unit_cost=#{unit_cost,jdbcType=DOUBLE},
+		descr=#{descr,jdbcType=VARCHAR},
+		cost_type=#{cost_type,jdbcType=CHAR} 
+		where cost_id=#{cost_id} 
+	</update>
+	<update id="updateByStatus" parameterType="com.chenqf.entity.Cost">
+		update cost_chenqf set status=#{status} where cost_id=#{cost_id}
+	</update>
+	<!-- 按照Id删除Cost -->
+	<delete id="deleteCost" parameterType="java.lang.Integer">
+		delete from cost_chenqf where cost_id=#{cost_id}
+	</delete>
+	
+	<!-- 分页查询 -->
+	<select id="findByPage" parameterType="com.chenqf.entity.page.CostPage" resultType="com.chenqf.entity.Cost">
+		select * from(select rownum r,c.* from (select * from cost_chenqf order by cost_id) c) where r&lt;#{end} and r&gt;#{begin}
+	</select>
+	
+	
+	<!-- 获得数据库中记录的总行数 -->
+	<select id="findRows" resultType="integer">
+		select count(*) from cost_chenqf
+	</select>
+</mapper>

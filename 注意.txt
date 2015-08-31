@@ -1,0 +1,4 @@
+WEB-INF下的东西是禁止直接访问的。如果这个页面是你的，要想让人访问最好不要放在这个目录下。如果一定放在那里。你可以使用：
+request.getRequestDispatcher("/WEB-INF/test.jsp").forward(request,response);
+
+所以你想直接添加一个链接那肯定是没发过去的。你可以先跳到一个jsp，那个jsp里写上上面的代码就可以了。

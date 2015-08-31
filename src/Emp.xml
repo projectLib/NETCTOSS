@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"      
+ "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<!-- namespace的值是Mapper接口的类名 -->
+<mapper namespace="com.chenqf.entity.EmpMapper">
+	<!-- insert元素用于定义insert语句 -->
+	<!-- id的值是Mapper接口中方法名，addEmp方法对应一个insert SQL语句。 -->
+	<!-- parameterType的值是addEmp方法参数类型。 -->
+	<!-- keyPropertty的值是表的主键属性名。 -->
+	<!-- #{loc}表示读取参数Emp的Bean属性loc -->
+	<insert id="addEmp" keyProperty="Empno" parameterType="com.chenqf.entity.Emp" >
+		insert into Emp_cqf(empno,ename,mgr,hiredate,sal,comm) values(seq_emp_cqf.nextval,#{ename},#{mgr},#{hiredate},#{sal},#{comm})
+	</insert>
+	<select id="findByEmpno" resultType="com.chenqf.entity.Emp" parameterType="java.lang.Integer">
+		select empno,ename,mgr,hiredate,sal,comm from Emp_cqf where Empno=#{Empno}
+		<!-- #{Empno}与方法参数对应 -->
+	</select>
+	<!-- findAll -->
+	<!-- resultType的值是返回结果集合中元素的类型，List<Emp> -->
+	<select id="findAllEmp" resultType="com.chenqf.entity.Emp">
+		select empno,ename,mgr,hiredate,sal,comm from Emp_cqf
+	</select>
+	<select id="findByLoc" resultType="com.chenqf.entity.Emp" parameterType="java.lang.String">
+		select empno,ename,mgr,hiredate,sal,comm from Emp_cqf where mgr=#{mgr}
+	</select>
+	<delete id="deleteEmp" parameterType="com.chenqf.entity.Emp">
+		delete from emp_cqf where empno=#{empno}
+		<!-- #{Empno}是参数对象的Bean属性! -->
+	</delete>
+	<update id="updateEmp" parameterType="com.chenqf.entity.Emp">
+		update emp_cqf set ename=#{ename},mgr=#{mgr},hiredate=#{hiredate},sal=#{sal},comm=#{comm} where empno=#{empno}
+	</update>
+</mapper>

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"      
+ "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.chenqf.dao.AdminMapper">
+
+	<!-- findAll -->
+	<select id="findAll"  resultType="com.chenqf.entity.Admin">
+		select * from admin_info_chenqf
+	</select>
+	<!-- findByPage -->
+	<select id="findByPage" parameterType="com.chenqf.entity.page.AdminPage"
+			resultMap="adminMap">
+		select * from
+			(select a.*,rownum r from
+				(select * from admin_info_chenqf
+					where admin_id in(
+						select ai.admin_id from
+					 	admin_info_chenqf ai
+						left join admin_role_chenqf  ar on ai.admin_id=ar.admin_id
+						left join role_info_chenqf   ri on ar.role_id =ri.role_id
+						left join role_module_chenqf rm on ri.role_id =rm.role_id
+						left join module_info_chenqf mi on rm.module_id=mi.module_id
+						<where>
+							<if test="roleName!=null &amp;&amp; !roleName.equals('')">
+								and ri.name like '%'||#{roleName}||'%'
+							</if>
+							<if test="moduleId!=null">
+								and mi.module_id = #{moduleId}
+							</if>
+						</where>
+					)
+				order by admin_id ) a
+			) 
+		where r &lt; #{end } and r &gt; #{begin}
+	</select>
+	
+	<!-- findRoleByAdmin -->
+	<select id="findRoleByAdmin" parameterType="int" resultType="com.chenqf.entity.Role">
+		select * from role_info_chenqf
+		where role_id in (
+			select role_id from admin_role_chenqf
+			where admin_id=#{admin_id}
+		)
+	</select>
+	<!-- 使用resultMap将管理员和角色自动装配 -->
+	<!-- adminMap -->
+	<resultMap id="adminMap" type="com.chenqf.entity.Admin">
+		<id column="admin_id" property="admin_id"/>
+		<collection select="findRoleByAdmin"
+					column="admin_id"
+					javaType="arraylist"
+					ofType="com.chenqf.entity.Role"
+					property="roles">
+		</collection>
+	</resultMap>
+	
+	<!-- findRows -->
+	<select id="findRows" resultType="int">
+		select count(*) from admin_info_chenqf
+		where admin_id in(
+			select ai.admin_id from
+		 	admin_info_chenqf ai
+			left join admin_role_chenqf  ar on ai.admin_id=ar.admin_id
+			left join role_info_chenqf   ri on ar.role_id =ri.role_id
+			left join role_module_chenqf rm on ri.role_id =rm.role_id
+			left join module_info_chenqf mi on rm.module_id=mi.module_id
+			<where>
+				<if test="roleName!=null &amp;&amp; !roleName.equals('')">
+					and ri.name like '%'||#{roleName}||'%'
+				</if>
+				<if test="moduleId!=null">
+					and mi.module_id = #{moduleId}
+				</if>
+			</where>
+		)
+	</select>
+	
+	<!-- findAllRole -->
+	<select id="findAllRole" resultType="com.chenqf.entity.Role">
+		select * from role_info_chenqf
+	</select>
+	
+	<!-- addAdmin -->
+	<insert id="addAdmin" parameterType="com.chenqf.entity.Admin">
+		<selectKey keyProperty="admin_id" order="BEFORE" resultType="int">
+			select admin_chenqf_seq.nextval from dual
+		</selectKey>
+		insert into admin_info_chenqf values
+		(
+		#{admin_id},
+		#{admin_code},
+		#{password},
+		#{name},
+		#{telephone},
+		#{email},
+		#{enrolldate}
+		)
+	</insert>
+	<!-- addAdminRole -->
+	<insert id="addAdminRole" parameterType="hashmap">
+		insert into admin_role_chenqf values
+		(#{admin_id},#{role_id})
+	</insert>
+	
+	<!-- findByName -->
+	<select id="findByName" parameterType="string" resultType="com.chenqf.entity.Admin">
+		select * from admin_info_chenqf where name=#{name}
+	</select>
+	<!-- findByAdminCode -->
+	<select id="findByAdminCode" parameterType="string" resultType="com.chenqf.entity.Admin">
+		select * from admin_info_chenqf where admin_code=#{adminCode}
+	</select>
+	
+	<!-- findById -->
+	<!-- <select id="findById" parameterType="int" resultType="com.chenqf.entity.Admin">
+		select * from admin_info_chenqf where admin_id=#{admin_id}
+	</select> -->
+	<!-- findById -->
+	<select id="findById" parameterType="int" resultMap="adminMap">
+		select * from admin_info_chenqf where admin_id=#{admin_id}
+	</select>
+	<!-- updateAdmin -->
+	<update id="updateAdmin" parameterType="com.chenqf.entity.Admin">
+		update admin_info_chenqf 
+		set name=#{name},telephone=#{telephone},email=#{email} 
+		where admin_id=#{admin_id}
+	</update>
+	
+	<!-- deleteAdmin -->
+	<delete id="deleteAdmin" parameterType="int">
+		delete from admin_info_chenqf where admin_id=#{admin_id}
+	</delete>
+	<!-- deleteRole -->
+	<delete id="deleteAdminRole" parameterType="int">
+		delete from admin_role_chenqf where admin_id=#{admin_id}
+	</delete>
+	
+	<!-- updatePassword -->
+	<update id="updatePassword" parameterType="hashmap">
+		update admin_info_chenqf set password=#{defaultPassword}
+		where admin_id in
+		<foreach collection="adminIds"
+			item="adminId"
+			open="("
+			close=")"
+			separator=",">
+			#{adminId}
+		</foreach>
+	</update>
+	
+	<!-- findModuleByAdmin -->
+	<select id="findModuleByAdmin" parameterType="int" resultType="com.chenqf.entity.Module">
+		select * from module_info_chenqf
+		where module_id in (
+			select mi.module_id from
+			admin_info_chenqf ai
+			inner join admin_role_chenqf ar on ai.admin_id=ar.admin_id
+			inner join role_info_chenqf ri on ar.role_id=ri.role_id
+			inner join role_module_chenqf rm on ri.role_id=rm.role_id
+			inner join module_info_chenqf mi on rm.module_id=mi.module_id
+			where ai.admin_id=#{admin_id}
+		)
+		order by module_id
+	</select>
+	
+	<!-- findRoleByAdminId -->
+	<select id="findRoleByAdminId" parameterType="int" resultType="com.chenqf.entity.Role">
+		select * from role_info_chenqf
+		where role_id in (
+			select role_id from admin_role_chenqf
+			where admin_id=#{adminId}
+		)
+	</select>
+</mapper>

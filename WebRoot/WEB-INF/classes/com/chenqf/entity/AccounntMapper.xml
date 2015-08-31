@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"      
+ "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.chenqf.dao.AccountMapper">
+
+	<select id="findAll" resultType="com.chenqf.entity.Account">
+		select * from account_chenqf order by account_id
+	</select>
+	
+	<select id="findById" resultType="com.chenqf.entity.Account" parameterType="integer">
+		select a.*,b.idcard_no recommender_idcardno 
+		from account_chenqf a 
+		left join account_chenqf b
+		on a.recommender_id=b.account_id
+		where a.account_id=#{account_id}
+	</select>
+	
+
+	<insert id="addAccount" keyProperty="account_id" parameterType="com.chenqf.entity.Account">
+		insert into account_chenqf 
+				(account_id,
+				recommender_id,
+				login_name,
+				login_passwd,
+				status,
+				create_date,
+				real_name,
+				birthdate,
+				idcard_no,
+				telephone,
+				email,
+				occupation,
+				gender,
+				mailaddress,
+				zipcode,
+				qq)
+     	values(
+				account_chenqf_seq.nextval,
+				#{recommender_id,jdbcType=VARCHAR},
+				#{login_name,jdbcType=VARCHAR},
+				#{login_passwd,jdbcType=VARCHAR},
+				#{status,jdbcType=CHAR},
+				#{create_date,jdbcType=TIMESTAMP},
+				#{real_name,jdbcType=VARCHAR},
+				#{birthdate,jdbcType=DATE},
+				#{idcard_no,jdbcType=VARCHAR},
+				#{telephone,jdbcType=VARCHAR},
+				#{email,jdbcType=VARCHAR},
+				#{occupation,jdbcType=VARCHAR},
+				#{gender,jdbcType=CHAR},
+				#{mailaddress,jdbcType=VARCHAR},
+				#{zipcode,jdbcType=CHAR},
+				#{qq,jdbcType=VARCHAR}
+		)
+	</insert>
+	<update id="updateAccount" parameterType="com.chenqf.entity.Account">
+		update account_chenqf set
+		real_name=#{real_name,jdbcType=VARCHAR},
+		idcard_no=#{idcard_no,jdbcType=VARCHAR},
+		login_name=#{login_name,jdbcType=VARCHAR},
+		recommender_id=#{recommender_id,jdbcType=DOUBLE},
+		birthdate=#{birthdate,jdbcType=DATE},
+		telephone=#{telephone,jdbcType=VARCHAR},
+		email=#{email,jdbcType=VARCHAR},
+		occupation=#{occupation,jdbcType=VARCHAR},
+		gender=#{gender,jdbcType=CHAR},
+		mailaddress=#{mailaddress,jdbcType=VARCHAR},
+		zipcode=#{zipcode,jdbcType=CHAR},
+		qq=#{qq,jdbcType=VARCHAR}
+		where account_id=#{account_id} 
+	</update>
+	<update id="updateByStatus" parameterType="com.chenqf.entity.Account">
+		update account_chenqf 
+		<set>
+			<if test='status!=null &amp;&amp; !status.equals("1")'>
+				status=#{status},pause_date=sysdate,
+			</if>
+			<if test='status!=null &amp;&amp; !status.equals("0")'>
+				status=#{status},pause_date=null,
+			</if>
+		</set>
+		where account_id=#{account_id}
+	</update>
+	<!-- 按照Id修该Account的状态为删除 -->
+	<update id="deleteAccount" parameterType="java.lang.Integer">
+		update account_chenqf set status='2',close_date=sysdate where account_id=#{account_id}
+	</update>
+	
+	<!-- 分页查询 -->
+	<select id="findByPage" parameterType="com.chenqf.entity.page.AccountPage" resultType="com.chenqf.entity.Account">
+		select * from(select rownum r,c.* from (select * from account_chenqf
+			<where>
+				<if test='idcardNo!=null &amp;&amp; !idcardNo.equals("")'>
+					and idcard_no=#{idcardNo}
+				</if>
+				<if test='realName!=null &amp;&amp; !realName.equals("")'>
+					and real_name=#{realName}
+				</if>
+				<if test='loginName!=null &amp;&amp; !loginName.equals("")'>
+					and login_name=#{loginName}
+				</if>
+				<if test='status!=null &amp;&amp; !status.equals("")'>
+					and status=#{status}
+				</if>
+			</where>
+		 order by account_id) c) where r&lt;#{end} and r&gt;#{begin}
+	</select>
+	
+	
+	<!-- 获得数据库中记录的总行数 -->
+	<select id="findRows" resultType="integer" parameterType="com.chenqf.entity.page.AccountPage">
+		select count(*) from account_chenqf
+		<where>
+			<if test='idcardNo!=null &amp;&amp; !idcardNo.equals("")'>
+				and idcard_no=#{idcardNo}
+			</if>
+			<if test='realName!=null &amp;&amp; !realName.equals("")'>
+				and real_name=#{realName}
+			</if>
+			<if test='loginName!=null &amp;&amp; !loginName.equals("")'>
+				and login_name=#{loginName}
+			</if>
+			<if test='status!=null &amp;&amp; !status.equals("")'>
+				and status=#{status}
+			</if>
+		</where>
+	</select>
+	
+	<select id="findByIdcardNo" resultType="com.chenqf.entity.Account" parameterType="string">
+		select * from  account_chenqf where idcard_no=#{idcardNo}
+	</select>
+</mapper>
